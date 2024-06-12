@@ -1,0 +1,96 @@
+Para a solução do problema eu utilizaria o scaffolding do rails,
+para gerar a controller, a view, e os testes para ambas. Ex:
+
+rails generate controller order index
+
+que gera algo semelhante a:
+
+    create  app/controllers/orders_controller.rb
+    route  get "orders/index"
+    invoke  erb
+    create    app/views/orders
+    create    app/views/orders/index.html.erb
+    invoke  test_unit
+    create    test/controllers/orders_controller_test.rb
+    invoke  helper
+    create    app/helpers/orders_helper.rb
+    invoke    test_unit
+    create      test/helpers/orders_helper_test.rb
+    invoke  assets
+    invoke    coffee
+    create      app/assets/javascripts/orders.js.coffee
+    invoke    scss
+    create      app/assets/stylesheets/orders.css.scss
+
+Depois eu configuraria o arquivo routes.rb
+
+Rails.application.routes.draw do
+  get "/orders", to: "orders#index"
+end
+
+Assumindo que o scaffolding gera algo parecido com:
+
+class OrdersController < ApplicationController
+  def index
+    @orders = Order.all
+  end
+end
+
+
+Depois eu escreveria os testes unitários 
+(supondo aqui que o projeto utiliza rspec, tem seeds, etc), 
+da OrderController:
+
+require 'spec_helper'
+
+describe OrdersController do
+  let(:orders) { create_list(:order, 5) }
+
+  describe '#index' do
+    it 'returns successful request' do
+      get :index
+      orders = assigns(:orders)
+      expect(orders).to be_present
+      expect(orders.count).to eq(5)
+      expect(response).to render_template :index
+      expect(response.code).to eq '200'
+    end
+  end
+end
+
+Que deve renderizar corretamente a tabela abaixo:
+
+<div class="" id="orders">
+  <% if @orders.length.positive? %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Order</th>
+          <th scope="col">Value</th>
+          <th scope="col">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @orders.each do |order| %>
+          <tr>
+            <td><%= order.id %></td>
+            <td><%= order.value %></td>
+            <td><%= order.status %></td>
+            <td class="align-middle">
+              <%= link_to 'Show', order, type:"button", class:"btn btn-info btn-sm bi bi-eye-fill" %>
+              <%= link_to 'Edit', edit_order_path(order), type:"button", class:"btn btn-info btn-sm bi bi-pencil-fill" %>
+              <%= button_to 'Delete', order, method: :delete, type:"button", class:"btn btn-info btn-sm bi bi-trash" %>
+            </td>
+          </tr>
+        <% end %>
+      <% else%>
+        <tr>
+          <td colspan="3">Nenhum pedido encontrado</td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>
+
+
+
